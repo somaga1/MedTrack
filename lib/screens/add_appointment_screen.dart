@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+// import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:medtrack/models/appointment.dart';
+// import 'package:medtrack/models/appointment.dart';
 import 'package:medtrack/utils/colors.dart';
 import 'package:medtrack/widgets/custom_appbar.dart';
 import 'package:medtrack/widgets/custom_button.dart';
@@ -58,65 +60,123 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
+  // void _scheduleNotification(String id) async {
+  //   var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+  //     id, // channelId
+  //     'MedTrack', // channelName
+  //     channelDescription: 'MedTrack notifications',
+  //     importance: Importance.max,
+  //     priority: Priority.high,
+  //   );
+  //   // var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+  //   var platformChannelSpecifics = NotificationDetails(
+  //       android: androidPlatformChannelSpecifics,
+  //       // iOS: iOSPlatformChannelSpecifics
+  //       );
+  //   await _notifications.schedule(
+  //     int.parse(id),
+  //     'MedTrack',
+  //     'You have an appointment with $_patientName at ${DateFormat.jm().format(_startTime)}',
+  //     _startTime.subtract(Duration(minutes: 15)),
+  //     platformChannelSpecifics,
+  //   );
+  // }
   void _scheduleNotification(String id) async {
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      id, // channelId
-      'MedTrack', // channelName
-      channelDescription: 'MedTrack notifications',
+      'appointment_channel', // channelId
+      'MedTrack Appointments', // channelName
+      channelDescription: 'Notifications for MedTrack appointments',
       importance: Importance.max,
       priority: Priority.high,
     );
-    // var iOSPlatformChannelSpecifics = IOSNotificationDetails();
     var platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        // iOS: iOSPlatformChannelSpecifics
-        );
-    await _notifications.schedule(
+      android: androidPlatformChannelSpecifics,
+    );
+    await _notifications.zonedSchedule(
       int.parse(id),
-      'MedTrack',
+      'MedTrack Appointment',
       'You have an appointment with $_patientName at ${DateFormat.jm().format(_startTime)}',
-      _startTime.subtract(Duration(minutes: 15)),
+      tz.TZDateTime.from(_startTime.subtract(Duration(minutes: 15)), tz.local),
       platformChannelSpecifics,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
-  void _showStartTimePicker() {
-    DatePicker.showDateTimePicker(
-      context,
-      showTitleActions: true,
-      minTime: DateTime.now(),
-      maxTime: DateTime.now().add(Duration(days: 365)),
-      onConfirm: (date) {
-        setState(() {
-          if (date.isAfter(_endTime)) {
+  void _showStartTimePicker() async {
+  final DateTime? pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _startTime,
+    firstDate: DateTime.now(),
+    lastDate: DateTime.now().add(Duration(days: 365)),
+  );
+  if (pickedDate != null) {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_startTime),
+    );
+    if (pickedTime != null) {
+      final DateTime combinedDateTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+      setState(() {
+        if (combinedDateTime.isAfter(_endTime)) {
+          if (kIsWeb) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Start time cannot be after end time')),
+            );
+          } else {
             Fluttertoast.showToast(msg: 'Start time cannot be after end time');
-          } else {
-            _startTime = date;
           }
-        });
-      },
-      currentTime: _startTime,
-    );
+        } else {
+          _startTime = combinedDateTime;
+        }
+      });
+    }
   }
+}
 
-  void _showEndTimePicker() {
-    DatePicker.showDateTimePicker(
-      context,
-      showTitleActions: true,
-      minTime: DateTime.now(),
-      maxTime: DateTime.now().add(Duration(days: 365)),
-      onConfirm: (date) {
-        setState(() {
-          if (date.isBefore(_startTime)) {
-            Fluttertoast.showToast(msg: 'End time cannot be before start time');
-          } else {
-            _endTime = date;
-          }
-        });
-      },
-      currentTime: _endTime,
+void _showEndTimePicker() async {
+  final DateTime? pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _endTime,
+    firstDate: DateTime.now(),
+    lastDate: DateTime.now().add(Duration(days: 365)),
+  );
+  if (pickedDate != null) {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_endTime),
     );
+    if (pickedTime != null) {
+      final DateTime combinedDateTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+      setState(() {
+        if (combinedDateTime.isBefore(_startTime)) {
+          if (kIsWeb) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('End time cannot be before start time')),
+            );
+          } else {
+            Fluttertoast.showToast(msg: 'End time cannot be before start time');
+          }
+        } else {
+          _endTime = combinedDateTime;
+        }
+      });
+    }
   }
+}
 
   @override
   Widget build(BuildContext context) {

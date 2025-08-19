@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+// import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -84,20 +84,19 @@ class _AppointmentSchedulingScreenState
     _fetchAppointments();
   }
 
-  void _showDatePicker() {
-    DatePicker.showDatePicker(
-      context,
-      showTitleActions: true,
-      minTime: DateTime.now(),
-      maxTime: DateTime.now().add(Duration(days: 365)),
-      onConfirm: (date) {
-        setState(() {
-          _selectedDate = date;
-        });
-      },
-      currentTime: _selectedDate,
-    );
+  void _showDatePicker() async {
+  final DateTime? pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _selectedDate,
+    firstDate: DateTime.now(),
+    lastDate: DateTime.now().add(Duration(days: 365)),
+  );
+  if (pickedDate != null) {
+    setState(() {
+      _selectedDate = pickedDate;
+    });
   }
+}
 
   @override
   void initState() {
