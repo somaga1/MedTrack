@@ -17,7 +17,8 @@ class FirestoreService {
   FirestoreService._internal();
 
   Future<void> addAppointment(Appointment appointment) async {
-    final uid = _auth.currentUser!.uid;
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('User not authenticated');
     await _firestore.collection('appointments').add({
       'userId': uid,
       'patientName': appointment.patientName,
@@ -44,12 +45,19 @@ class FirestoreService {
       final patientPhone = data['patientPhone'];
       final startTime = data['startTime'].toDate();
       final endTime = data['endTime'].toDate();
-      return Appointment(id, patientName, patientPhone, startTime, endTime);
+      return Appointment(
+        id: id,
+        patientName: patientName,
+        patientPhone: patientPhone,
+        startTime: startTime,
+        endTime: endTime,
+      );
     }).toList();
   }
 
   Future<void> addInventoryItem(InventoryItem item) async {
-    final uid = _auth.currentUser!.uid;
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('User not authenticated');
     await _firestore.collection('inventory').add({
       'userId': uid,
       'itemName': item.itemName,
@@ -77,12 +85,18 @@ class FirestoreService {
       final itemPrice = data['itemPrice'];
       final itemExpiryDate = data['itemExpiryDate'].toDate();
       return InventoryItem(
-          id, itemName, itemQuantity, itemPrice, itemExpiryDate);
+        id: id,
+        itemName: itemName,
+        itemQuantity: itemQuantity,
+        itemPrice: itemPrice,
+        itemExpiryDate: itemExpiryDate,
+      );
     }).toList();
   }
 
   Future<void> addPatientRecord(PatientRecord record) async {
-    final uid = _auth.currentUser!.uid;
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('User not authenticated');
     await _firestore.collection('patients').add({
       'userId': uid,
       'patientName': record.patientName,
@@ -111,13 +125,21 @@ class FirestoreService {
       final patientGender = data['patientGender'];
       final patientDiagnosis = data['patientDiagnosis'];
       final patientTreatment = data['patientTreatment'];
-      return PatientRecord(id, patientName, patientAge, patientGender,
-          patientDiagnosis, patientTreatment);
+      return PatientRecord(
+        id: id,
+        patientName: patientName,
+        patientAge: patientAge,
+        patientGender: patientGender,
+        medicalHistory: data['medicalHistory'],
+        patientDiagnosis: patientDiagnosis,
+        patientTreatment: patientTreatment,
+      );
     }).toList();
   }
 
   Future<void> addNotification(NotificationModel notification) async {
-    final uid = _auth.currentUser!.uid;
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('User not authenticated');
     await _firestore.collection('notifications').add({
       'userId': uid,
       'title': notification.title,

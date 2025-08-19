@@ -46,7 +46,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
           'startTime': Timestamp.fromDate(_startTime),
           'endTime': Timestamp.fromDate(_endTime),
         });
-        await _scheduleNotification(docRef.id);
+        _scheduleNotification(docRef.id);
         Fluttertoast.showToast(msg: 'Appointment added');
         Navigator.pop(context);
       } on FirebaseException catch (e) {
@@ -60,9 +60,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
   void _scheduleNotification(String id) async {
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      id,
-      'MedTrack',
-      'MedTrack notifications',
+      id, // channelId
+      'MedTrack', // channelName
+      channelDescription: 'MedTrack notifications',
       importance: Importance.max,
       priority: Priority.high,
     );

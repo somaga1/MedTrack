@@ -40,7 +40,6 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
           primaryColor: AppColor.deepgreen,
           // textTheme: GoogleFonts.poppinsTextTheme(),
-          backgroundColor: Colors.white,
           appBarTheme: AppBarTheme(
               backgroundColor: AppColor.deepgreen,
               elevation: 0,

@@ -32,13 +32,13 @@ class _AppointmentSchedulingScreenState
   final _notifications = FlutterLocalNotificationsPlugin();
 
   DateTime _selectedDate = DateTime.now();
-  EventList<Event> _markedDates = EventList<Event>();
+  EventList<Event> _markedDates = EventList<Event>(events: {});
   List<Appointment> _appointments = [];
 
   void _fetchAppointments() async {
     setState(() {
       _appointments = [];
-      _markedDates = EventList<Event>();
+      _markedDates = EventList<Event>(events: {});
     });
     final uid = _auth.currentUser!.uid;
     final snapshot = await _firestore
@@ -187,6 +187,7 @@ class _AppointmentSchedulingScreenState
                       patientPhone: appointment.patientPhone,
                       startTime: appointment.startTime,
                       endTime: appointment.endTime,
+                      onDelete: () => _deleteAppointment(appointment.id),
                     );
                   } else {
                     return
@@ -284,6 +285,7 @@ class AppointmentCard extends StatelessWidget {
   final String patientPhone;
   final DateTime startTime;
   final DateTime endTime;
+  final VoidCallback onDelete; // Add this
 
   const AppointmentCard({
     Key? key,
@@ -292,27 +294,30 @@ class AppointmentCard extends StatelessWidget {
     required this.patientPhone,
     required this.startTime,
     required this.endTime,
+    required this.onDelete, // Add this
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Slidable(
-      actionPane: SlidableDrawerActionPane(),
-      actionExtentRatio: 0.25,
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) => onDelete(),
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+        ],
+      ),
       child: ListTile(
         leading: Icon(Icons.person),
         title: Text(patientName),
         subtitle: Text(patientPhone),
         trailing: Text(DateFormat.jm().format(startTime)),
       ),
-      secondaryActions: [
-        IconSlideAction(
-          caption: 'Delete',
-          color: Colors.red,
-          icon: Icons.delete,
-          onTap: () => _deleteAppointment(id),
-        ),
-      ],
     );
   }
 }

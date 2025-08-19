@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:medtrack/services/notification_service.dart';
 import 'package:medtrack/services/firestore_service.dart';
 import 'package:medtrack/widgets/custom_appbar.dart';
+import 'package:medtrack/models/notification_model.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -16,7 +17,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _firestoreService = FirestoreService();
 
-  List<Notification> _notifications = [];
+  List<NotificationModel> _notifications = [];
 
   void _fetchNotifications() async {
     setState(() {
@@ -54,8 +55,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           itemBuilder: (context, index) {
             final notification = _notifications[index];
             return Slidable(
-              actionPane: SlidableDrawerActionPane(),
-              actionExtentRatio: 0.25,
+              key: ValueKey(notification.id),
+              endActionPane: ActionPane(
+                motion: const DrawerMotion(),
+                children: [
+                  SlidableAction(
+                    onPressed: (context) {
+                      _deleteNotification(notification.id);
+                    },
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    icon: Icons.delete,
+                    label: 'Delete',
+                  ),
+                ],
+              ),
               child: Card(
                 elevation: 4.0,
                 shape: RoundedRectangleBorder(
@@ -68,16 +82,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   trailing: Icon(Icons.arrow_forward_ios),
                 ),
               ),
-              secondaryActions: [
-                IconSlideAction(
-                  caption: 'Delete',
-                  color: Colors.red,
-                  icon: Icons.delete,
-                  onTap: () {
-                    _deleteNotification(notification.id);
-                  },
-                ),
-              ],
             );
           },
         ),
